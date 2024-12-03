@@ -1,0 +1,41 @@
+classdef RenderState < handle
+    properties
+        Window % matlab.ui.Figure
+        isDirty % boolean
+        RenderObjects % cell array of RenderObject
+        gameState % class encapsulating the game state
+    end
+
+    methods
+        function obj = RenderState(window, gameState)
+            obj.Window = window;
+            obj.isDirty = true;
+            obj.RenderObjects = {};
+            obj.gameState = gameState;
+        end
+
+        function render(obj)
+            if obj.isDirty
+                obj.Window.Visible = "on";
+                obj.isDirty = false;
+            end
+        end
+
+        function addRenderObject(obj, renderObject)
+            obj.RenderObjects{end + 1} = renderObject;
+            obj.isDirty = true;
+        end
+
+        function removeRenderObject(obj, renderObject)
+            for i = 1:length(obj.RenderObjects)
+                if obj.RenderObjects{i} == renderObject
+                    obj.RenderObjects(i) = [];
+                    obj.isDirty = true;
+                    break;
+                end
+            end
+        end
+
+    end
+    
+end
