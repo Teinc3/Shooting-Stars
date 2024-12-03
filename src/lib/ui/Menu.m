@@ -1,7 +1,7 @@
-classdef MainMenu < RenderState
+classdef Menu < RenderUI
     methods
-        function obj = MainMenu(window, gameState)
-            obj@RenderState(window, gameState);
+        function obj = Menu(window, gameState)
+            obj@RenderUI(window, gameState);
             
             windowSize = obj.Window.Position(3:4);
 
@@ -18,6 +18,10 @@ classdef MainMenu < RenderState
 
         function exitGame(obj)
             obj.Window.delete();
+        end
+
+        function update(~)
+
         end
     end
 end

@@ -1,4 +1,4 @@
-classdef RenderState < handle
+classdef (Abstract) RenderUI < handle
     properties
         Window % matlab.ui.Figure
         isDirty % boolean
@@ -7,18 +7,11 @@ classdef RenderState < handle
     end
 
     methods
-        function obj = RenderState(window, gameState)
+        function obj = RenderUI(window, gameState)
             obj.Window = window;
             obj.isDirty = true;
             obj.RenderObjects = {};
             obj.gameState = gameState;
-        end
-
-        function render(obj)
-            if obj.isDirty
-                obj.Window.Visible = "on";
-                obj.isDirty = false;
-            end
         end
 
         function addRenderObject(obj, renderObject)
@@ -36,6 +29,17 @@ classdef RenderState < handle
             end
         end
 
+        function render(obj)
+            if obj.isDirty
+                obj.Window.Visible = "on";
+                obj.isDirty = false;
+            end
+        end
+
+    end
+
+    methods (Abstract)
+        update(obj)
     end
     
 end

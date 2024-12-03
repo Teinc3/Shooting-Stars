@@ -1,5 +1,5 @@
-classdef GameState
-    properties
+classdef GameState < handle
+    properties (SetObservable)
         state {mustBeMember(state, [0, 1, 2])}
     end
 
@@ -8,7 +8,7 @@ classdef GameState
             obj.state = 0;
         end
 
-        function obj = update_gamestate(obj, newState)
+        function update_gamestate(obj, newState)
             obj.state = newState;
         end
     end
