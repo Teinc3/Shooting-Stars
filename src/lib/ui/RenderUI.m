@@ -1,6 +1,6 @@
 classdef (Abstract) RenderUI < handle
     properties
-        Window % matlab.ui.Figure
+        window % matlab.ui.Figure
         isDirty % boolean
         RenderObjects % cell array of RenderObject
         gameState % class encapsulating the game state
@@ -8,7 +8,7 @@ classdef (Abstract) RenderUI < handle
 
     methods
         function obj = RenderUI(window, gameState)
-            obj.Window = window;
+            obj.window = window;
             obj.isDirty = true;
             obj.RenderObjects = {};
             obj.gameState = gameState;
@@ -31,9 +31,16 @@ classdef (Abstract) RenderUI < handle
 
         function render(obj)
             if obj.isDirty
-                obj.Window.Visible = "on";
-                obj.isDirty = false;
+                % Delete rendered old components
+                
             end
+        end
+
+        function clean(obj)
+            while ~isempty(obj.RenderObjects)
+                obj.removeRenderObject(obj.RenderObjects{1});
+            end
+            obj.isDirty = true;
         end
 
     end

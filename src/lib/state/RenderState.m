@@ -1,15 +1,20 @@
 classdef RenderState < handle
     properties
+        exists = false;
         renderUI % Make sure this is not empty
     end
 
     methods
         function obj = RenderState(window, gameState)
             % RenderState - Constructor for the RenderState class
-            obj.renderUI = Menu(window, gameState);
+            obj.updateRenderUI(window, gameState);
         end
 
         function updateRenderUI(obj, window, gameState)
+            if obj.exists
+                obj.renderUI.delete();
+            end
+            
             % RenderState - Update the UI based on the game state
             switch gameState.state
                 case 0
@@ -21,6 +26,8 @@ classdef RenderState < handle
                 otherwise
                     error("Invalid game state");
             end
+
+            obj.exists = true;
         end
 
         function update(obj)
