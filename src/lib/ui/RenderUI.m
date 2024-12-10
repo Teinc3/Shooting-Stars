@@ -20,13 +20,10 @@ classdef (Abstract) RenderUI < handle
         end
 
         function removeRenderObject(obj, renderObject)
-            for i = 1:length(obj.RenderObjects)
-                if obj.RenderObjects{i} == renderObject
-                    obj.RenderObjects(i) = [];
-                    obj.isDirty = true;
-                    break;
-                end
-            end
+            % Remove and delete the UI component
+            delete(renderObject); % Delete the UI component from the figure
+            obj.RenderObjects(cellfun(@(x) x == renderObject, obj.RenderObjects)) = [];
+            obj.isDirty = true;
         end
 
         function render(obj)

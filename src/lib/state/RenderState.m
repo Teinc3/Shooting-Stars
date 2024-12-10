@@ -12,7 +12,7 @@ classdef RenderState < handle
 
         function updateRenderUI(obj, window, gameState)
             if obj.exists
-                obj.renderUI.delete();
+                obj.renderUI.clean();
             end
             
             % RenderState - Update the UI based on the game state
