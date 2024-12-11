@@ -1,48 +1,47 @@
 classdef (Abstract) RenderUI < handle
+    properties (Constant)
+        fps = 60;
+        timePerFrame = 1/60;
+    end
+
     properties
         window % matlab.ui.Figure
+        windowSize % double
         isDirty % boolean
         RenderObjects % cell array of RenderObject
-        gameState % class encapsulating the game state
+        globalState % class encapsulating the game state
     end
 
     methods
-        function obj = RenderUI(window, gameState)
+        function obj = RenderUI(window, globalState)
             obj.window = window;
-            obj.isDirty = true;
+            obj.windowSize = window.Position(3:4);
             obj.RenderObjects = {};
-            obj.gameState = gameState;
+            obj.globalState = globalState;
+
+            obj.defineRenderObjects();
         end
 
         function addRenderObject(obj, renderObject)
             obj.RenderObjects{end + 1} = renderObject;
-            obj.isDirty = true;
         end
 
         function removeRenderObject(obj, renderObject)
             % Remove and delete the UI component
             delete(renderObject); % Delete the UI component from the figure
             obj.RenderObjects(cellfun(@(x) x == renderObject, obj.RenderObjects)) = [];
-            obj.isDirty = true;
-        end
-
-        function render(obj)
-            if obj.isDirty
-                % Delete rendered old components
-                
-            end
         end
 
         function clean(obj)
             while ~isempty(obj.RenderObjects)
                 obj.removeRenderObject(obj.RenderObjects{1});
             end
-            obj.isDirty = true;
         end
 
     end
 
     methods (Abstract)
+        defineRenderObjects(obj)
         update(obj)
     end
     

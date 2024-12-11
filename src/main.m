@@ -1,33 +1,33 @@
 % main.m
 % A shooting range game
 
-% Variables
-
-% Clear workspace
-clc
-clear variables
 close all
+clear variables
+clc
 
 % Display Configuration
 window = uifigure(Name="Shooting Stars", Position=[100, 100, 800, 600]);
 
-% FPS Settings
-fps = 60;
-timePerFrame = 1/fps;
-
 % Game State
 % 0: Main Menu, 1: Game, 2: Results
-gameState = GameState();
+globalState = GlobalState();
 
 % Render UI
-renderState = RenderState(window, gameState);
+renderState = RenderState(window, globalState);
 
 % Event Listener for game state change
-addlistener(gameState, 'state', 'PostSet', @(src, event) renderState.updateRenderUI(window, gameState));
+addlistener(globalState, 'gameState', 'PostSet', @(src, event) renderState.updateRenderUI(window, globalState));
 
 % Main Loop
-while isvalid(window)
+while isvalid(window) && globalState.gameState ~= 3
     renderState.update();
-    renderState.render();
-    pause(timePerFrame);
+    pause(renderState.renderUI.timePerFrame);
 end
+
+if isvalid(window)
+    close(window);
+end
+
+close all
+clear variables
+clc

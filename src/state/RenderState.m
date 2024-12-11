@@ -5,26 +5,27 @@ classdef RenderState < handle
     end
 
     methods
-        function obj = RenderState(window, gameState)
+        function obj = RenderState(window, globalState)
             % RenderState - Constructor for the RenderState class
-            obj.updateRenderUI(window, gameState);
+            obj.updateRenderUI(window, globalState);
         end
 
-        function updateRenderUI(obj, window, gameState)
+        function updateRenderUI(obj, window, globalState)
             if obj.exists
                 obj.renderUI.clean();
             end
             
             % RenderState - Update the UI based on the game state
-            switch gameState.state
+            switch globalState.gameState
                 case 0
-                    obj.renderUI = Menu(window, gameState);
+                    obj.renderUI = Menu(window, globalState);
                 case 1
-                    obj.renderUI = Battle(window, gameState);
+                    obj.renderUI = Battle(window, globalState);
                 case 2
-                    obj.renderUI = Results(window, gameState);
+                    obj.renderUI = Results(window, globalState);
                 otherwise
-                    error("Invalid game state");
+                    obj.exists = false;
+                    return
             end
 
             obj.exists = true;
@@ -33,11 +34,6 @@ classdef RenderState < handle
         function update(obj)
             % update - Update the UI based on the game state
             obj.renderUI.update();
-        end
-
-        function render(obj)
-            % render - Render the UI based on the game state
-            obj.renderUI.render();
         end
     end
 end
