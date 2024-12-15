@@ -2,11 +2,13 @@ classdef RenderState < handle
     properties
         exists = false;
         renderUI % Make sure this is not empty
+        neonTimer
     end
 
     methods
-        function obj = RenderState(window, globalState)
+        function obj = RenderState(window, globalState, neonTimer)
             % RenderState - Constructor for the RenderState class
+            obj.neonTimer = neonTimer;
             obj.updateRenderUI(window, globalState);
         end
 
@@ -33,6 +35,13 @@ classdef RenderState < handle
 
         function update(obj)
             % update - Update the UI based on the game state
+
+            % Update the neon styling
+            for i = 1:length(obj.renderUI.RenderObjects)
+                obj.neonTimer.update(obj.renderUI.RenderObjects{i});
+            end
+            
+            % Update mechanics
             obj.renderUI.update();
         end
     end
