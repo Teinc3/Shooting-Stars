@@ -2,6 +2,7 @@ classdef Battle < RenderUI
     properties
         timeLeftInFrames
         timeLeftInSeconds
+        stars % Cell array of Star objects to render
         combo
     end
     methods
@@ -13,6 +14,8 @@ classdef Battle < RenderUI
             obj.combo = 0;
 
             obj.globalState.score = 0;
+
+            obj.stars = [];
         end
 
         % UI Layout
@@ -26,6 +29,11 @@ classdef Battle < RenderUI
             scoreCounter = uilabel('Parent', obj.window, 'Text', 'Score: 0', 'FontSize', 20, 'HorizontalAlignment', "right");
             scoreCounter.Position = [obj.windowSize(1) - 130, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
             obj.addRenderObject(scoreCounter);
+
+            % Star Counter at the top middle (Debug)
+            starCounter = uilabel('Parent', obj.window, 'Text', 'Stars: 0', 'FontSize', 20, 'HorizontalAlignment', "center");
+            starCounter.Position = [obj.windowSize(1) / 2 - 60, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
+            obj.addRenderObject(starCounter);
         end
 
         function update(obj)
@@ -40,11 +48,42 @@ classdef Battle < RenderUI
             % Update the text of the time counter
             obj.RenderObjects{1}.Text = ['Time: ', num2str(obj.timeLeftInSeconds)];
             obj.RenderObjects{2}.Text = ['Score: ', num2str(obj.globalState.score)];
+            obj.RenderObjects{3}.Text = ['Stars: ', num2str(length(obj.stars))];
 
-            % Randomly increase score
-            if rand() < 0.01
-                obj.globalState.score = obj.globalState.score + 1;
+            % Function to spawn and update/render stars
+            obj.spawnStars();
+
+            for i = 1:length(obj.stars)
+                obj.stars(i).update(obj.timePerFrame);
             end
+        end
+
+        function render(obj)
+            % Wipe the window clean of stars
+
+            % Re-render all stars
+            for i = 1:length(obj.stars)
+                obj.stars(i).render();
+            end
+        end
+
+        function spawnStars(obj)
+            % Chance of spawning new star is max(0.05-starCount/100, 0)
+            starSpawnChance = max(0.05 - length(obj.stars) / 100, 0);
+
+            if rand() < starSpawnChance
+                % Randomly generate star properties
+                vertexCount = randi([2, 10]);
+                star = Star(obj.window, vertexCount, @(s) obj.despawnStar(s));
+
+                % Add star to the list of objects to render
+                obj.stars = [obj.stars, star];
+            end
+        end
+
+        function despawnStar(obj, star)
+            % Remove star from the list of objects to render
+            obj.stars = obj.stars(obj.stars ~= star);
         end
     end
 end
