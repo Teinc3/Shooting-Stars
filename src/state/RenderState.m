@@ -33,21 +33,15 @@ classdef RenderState < handle
             obj.exists = true;
         end
 
-        function tick(obj)
-            obj.update();
-            obj.renderUI.render();
-        end
-
-        function update(obj)
-            % update - Update the UI based on the game state
+        function update(obj, deltaTime)
 
             % Update the neon styling
-            for i = 1:length(obj.renderUI.RenderObjects)
-                obj.neonTimer.update(obj.renderUI.RenderObjects{i});
+            for i = length(obj.renderUI.RenderObjects):-1:1
+                obj.neonTimer.setStyle(obj.renderUI.RenderObjects{i});
             end
             
             % Update mechanics
-            obj.renderUI.update();
+            obj.renderUI.update(deltaTime);
         end
     end
 end

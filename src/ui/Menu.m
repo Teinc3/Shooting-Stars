@@ -21,9 +21,5 @@ classdef Menu < RenderUI
         function exitGame(obj)
             obj.globalState.updateGameState(3);
         end
-
-        function update(~)
-
-        end
     end
 end

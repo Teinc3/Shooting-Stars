@@ -1,7 +1,6 @@
 classdef (Abstract) RenderUI < handle
     properties (Constant)
-        fps = 60;
-        timePerFrame = 1/60;
+        minTimePerFrame = 1 / 30; % FPS capped at 60
     end
 
     properties
@@ -38,15 +37,13 @@ classdef (Abstract) RenderUI < handle
             end
         end
 
-        function render(~)
-            % Does not exist default due to UI components do not requiring self-renderin
-            % Implementation overriden in Battle to render Stars
+        function update(~, ~)
+            % Defaults to nothing, but overridden in Battle subclass
         end
     end
 
     methods (Abstract)
         defineRenderObjects(obj)
-        update(obj)
     end
     
 end

@@ -3,8 +3,6 @@ classdef NeonTimer < handle
         offset          % Global offset for color changes
         baseColors      % Structure holding base colors for components
         colorRange      % Structure defining color fluctuation ranges
-        timerHandle     % Handle to the timer
-        step            % Increment step for offset
         maxOffset       % Maximum offset value before reset
         currentColors   % Current colors applied to components
     end
@@ -13,7 +11,6 @@ classdef NeonTimer < handle
         function obj = NeonTimer()
             % Constructor: Initializes properties and starts the timer
             obj.offset = 0;
-            obj.step = 0.05; % Adjust for speed of color change
             obj.maxOffset = 2 * pi; % For cyclical changes using sine wave
             
             % Define base colors for different components
@@ -30,21 +27,12 @@ classdef NeonTimer < handle
             obj.currentColors.background = obj.baseColors.background;
             obj.currentColors.button = obj.baseColors.button;
             obj.currentColors.label = obj.baseColors.label;
-            
-            % Start the timer
-            obj.startTimer();
         end
         
-        function startTimer(obj)
-            % startTimer - Initializes and starts the timer
-            obj.timerHandle = timer('TimerFcn', @(~,~) obj.onTimer(), 'ExecutionMode', 'fixedRate', 'Period', 0.05);
-            start(obj.timerHandle);
-        end
-        
-        function onTimer(obj)
+        function update(obj, deltaTime)
             % onTimer - Function called on each timer tick to update colors
             % Update the offset
-            obj.offset = obj.offset + obj.step;
+            obj.offset = obj.offset + deltaTime;
             if obj.offset > obj.maxOffset
                 obj.offset = obj.offset - obj.maxOffset; % Reset for cyclical effect
             end
@@ -65,14 +53,8 @@ classdef NeonTimer < handle
             obj.currentColors.label = newLabel;
         end
         
-        function stopTimer(obj)
-            % stopTimer - Stops and deletes the timer
-            stop(obj.timerHandle);
-            delete(obj.timerHandle);
-        end
-        
-        function update(obj, uiComponent)
-            
+        function setStyle(obj, uiComponent)
+             
             if isa(uiComponent, 'matlab.ui.Figure')
                 neonStyle = obj.getBackgroundStyle();
             elseif isa(uiComponent, 'matlab.ui.control.Button')

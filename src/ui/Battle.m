@@ -1,6 +1,11 @@
 classdef Battle < RenderUI
+    properties (Constant)
+        TimeLimit = 90;
+
+        MinSpawnRate = 2;
+        MaxStarCount = 10;
+    end
     properties
-        timeLeftInFrames
         timeLeftInSeconds
         stars % Cell array of Star objects to render
         combo
@@ -10,8 +15,7 @@ classdef Battle < RenderUI
         function obj = Battle(window, globalState)
             obj@RenderUI(window, globalState); % Call superclass constructor
 
-            obj.timeLeftInSeconds = 90;
-            obj.timeLeftInFrames = obj.timeLeftInSeconds * obj.fps;
+            obj.timeLeftInSeconds = Battle.TimeLimit;
             obj.combo = 0;
 
             obj.globalState.score = 0;
@@ -52,57 +56,59 @@ classdef Battle < RenderUI
             hold(obj.axesHandle, 'on');
         end
 
-        function update(obj)
+        function update(obj, deltaTime)
             % Implement game-specific update logic
-            obj.timeLeftInFrames = obj.timeLeftInFrames - 1;
-            if obj.timeLeftInFrames == 0
+
+            obj.timeLeftInSeconds = obj.timeLeftInSeconds - deltaTime;
+            if obj.timeLeftInSeconds <= 0
+                % Despawn all stars
+                for i = length(obj.stars):-1:1
+                    obj.despawnStar(obj.stars(i));
+                end
+
+                % Move to results screen
                 obj.globalState.updateGameState(2);
-            elseif mod(obj.timeLeftInFrames, obj.fps) == obj.fps - 1
-                obj.timeLeftInSeconds = obj.timeLeftInSeconds - 1;
             end
 
             % Update the text of the time counter
-            obj.RenderObjects{1}.Text = ['Time: ', num2str(obj.timeLeftInSeconds)];
+            obj.RenderObjects{1}.Text = ['Time: ', num2str(ceil(obj.timeLeftInSeconds))];
             obj.RenderObjects{2}.Text = ['Score: ', num2str(obj.globalState.score)];
             obj.RenderObjects{3}.Text = ['Stars: ', num2str(length(obj.stars))];
 
             % Function to spawn and update/render stars
-            obj.spawnStars();
+            obj.spawnStars(deltaTime);
 
-            for i = 1:length(obj.stars)
-                obj.stars(i).update(obj.timePerFrame);
+            for i = length(obj.stars):-1:1
+                obj.stars(i).update(deltaTime);
             end
         end
 
-        function render(obj)
-            % Wipe the window clean of stars
-            cla(obj.axesHandle);
+        function spawnStars(obj, deltaTime)
+            % Chance of spawning new star
+            % At 0 stars: MinSpawnRate per second
+            % At MaxStarCount: 0 per second (Capped)
+            % If due to lagspike and chance ends up > 1, spawn star and compare next frame
+            starSpawnChance = max(0, Battle.MinSpawnRate * (1 - length(obj.stars) / Battle.MaxStarCount)) * deltaTime;
 
-            hold(obj.axesHandle, 'on');
-
-            % Re-render all stars
-            for i = 1:length(obj.stars)
-                obj.stars(i).render();
-            end
-
-            hold(obj.axesHandle, 'off');
-        end
-
-        function spawnStars(obj)
-            % Chance of spawning new star is max(0.05-starCount/100, 0)
-            starSpawnChance = max(0.05 - length(obj.stars) / 100, 0);
-
-            if rand() < starSpawnChance
+            while rand() < starSpawnChance
                 % Randomly generate star properties
                 vertexCount = randi([2, 10]);
                 star = Star(obj.window, obj.axesHandle, vertexCount, @(s) obj.despawnStar(s));
 
                 % Add star to the list of objects to render
                 obj.stars = [obj.stars, star];
+
+                % To allow for multiple stars to be spawned in the same frame if a lagspike occurs
+                starSpawnChance = starSpawnChance - 1;
             end
         end
 
         function despawnStar(obj, star)
+            % Check Combo
+            if ~star.isHit
+                obj.combo = 0;
+            end
+
             % Remove star from the list of objects to render
             obj.stars = obj.stars(obj.stars ~= star);
             if isgraphics(star.plotHandle)
@@ -113,7 +119,7 @@ classdef Battle < RenderUI
         function onAxesClick(obj, event)
             % Check if the click was on a star
             clickPosition = [event.IntersectionPoint(1), event.IntersectionPoint(2)];
-            for i = 1:length(obj.stars)
+            for i = length(obj.stars):-1:1
                 score = obj.stars(i).onClick(clickPosition);
                 if score > 0
                     obj.globalState.score = obj.globalState.score + score + obj.combo;

@@ -28,11 +28,7 @@ classdef Results < RenderUI
             mainMenuButton.Position = [obj.windowSize(1) * 0.3, obj.windowSize(2) * 0.35, obj.windowSize(1) * 0.4, 50];
             obj.addRenderObject(mainMenuButton);
         end
-
-        function update(~)
-            % Implement results-specific update logic
-        end
-
+        
         function onPlayAgain(obj)
             % Callback for Play Again button
             obj.globalState.updateGameState(1); % Transition to the battle gameState
