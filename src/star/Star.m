@@ -1,6 +1,8 @@
 classdef Star < handle
     properties
         window % handle to the window
+        axesHandle % handle to the axes
+
         vertexCount % Number of vertices in the star
 
         centralPosition % 2x1 Vector of central position
@@ -19,11 +21,13 @@ classdef Star < handle
 
         isHit % boolean to check if star is hit
         despawnStar % function handle to despawn the star
+
     end
 
     methods
-        function obj = Star(window, vertexCount, despawnStar)
+        function obj = Star(window, axesHandle, vertexCount, despawnStar)
             obj.window = window;
+            obj.axesHandle = axesHandle;
             obj.vertexCount = vertexCount;
 
             obj.centralPosition = zeros(1, 2);
@@ -82,7 +86,7 @@ classdef Star < handle
         function updateModulus(obj)
             if obj.isHit
                 % Gradually diminish its size
-                obj.size = obj.size - ogSize / 100;
+                obj.size = obj.size - obj.ogSize / 100;
                 if obj.size < 0
                     obj.despawnStar(obj);
                 end
@@ -101,14 +105,12 @@ classdef Star < handle
 
             obj.starUpdated = false;
 
-            % Plot the star
-            rgb = hsv2rgb([obj.color/(2*pi), 1, 1]);
+            % Obtain Star information
+            obj.getTransformedStar();
+            rgbColor = hsv2rgb([obj.color / (2 * pi), 1, 1]);
 
-            if isgraphics(obj.plotHandle)
-                set(obj.plotHandle, 'XData', obj.position(1, :), 'YData', obj.position(2, :), 'FaceColor', rgbColor);
-            else
-                obj.plotHandle = fill(axesHandle, obj.position(1, :), obj.position(2, :), rgbColor, 'EdgeColor', 'none');
-            end
+            % Draw the star
+            fill(obj.axesHandle, obj.position(1, :), obj.position(2, :), rgbColor, 'EdgeColor', 'none', 'PickableParts', 'none');
         end
 
         function position = getTransformedStar(obj)
@@ -122,10 +124,17 @@ classdef Star < handle
             obj.position = position;
         end
 
-        function score = onHit(obj)
-            obj.isHit = true;
-            % Score gained relative to ogSize, the smaller the better
-            score = (obj.ogSize / obj.size)^2 + abs(obj.angV)/4;
+        function score = onClick(obj, clickPosition)
+            % Check polygon collision with mouse click
+            % If hit, set isHit to true and return score
+            % Else return 0 (no score)
+            if ~obj.isHit && inpolygon(clickPosition(1), clickPosition(2), obj.position(:, 1), obj.position(:, 2))
+                obj.isHit = true;
+                % Score gained relative to ogSize, the smaller the better
+                score = (obj.ogSize / obj.size)^2 + abs(obj.angV)/4;
+            else
+                score = 0;
+            end
         end
     end
 end

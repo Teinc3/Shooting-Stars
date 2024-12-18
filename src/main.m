@@ -25,7 +25,8 @@ addlistener(globalState, 'gameState', 'PostSet', @(src, event) renderState.updat
 while isvalid(window) && globalState.gameState ~= 3
     % Update the window and renderUI
     neonTimer.update(window);
-    renderState.update();
+
+    renderState.tick();
 
     pause(renderState.renderUI.timePerFrame);
 end

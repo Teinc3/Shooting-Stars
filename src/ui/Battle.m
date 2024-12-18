@@ -4,6 +4,7 @@ classdef Battle < RenderUI
         timeLeftInSeconds
         stars % Cell array of Star objects to render
         combo
+        axesHandle % Handle to the axes object to render stars
     end
     methods
         function obj = Battle(window, globalState)
@@ -34,6 +35,21 @@ classdef Battle < RenderUI
             starCounter = uilabel('Parent', obj.window, 'Text', 'Stars: 0', 'FontSize', 20, 'HorizontalAlignment', "center");
             starCounter.Position = [obj.windowSize(1) / 2 - 60, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
             obj.addRenderObject(starCounter);
+
+            % Attach axes to the ui window
+            obj.axesHandle = uiaxes('Parent', obj.window);
+            obj.axesHandle.Position = [0, 0, obj.windowSize(1), obj.windowSize(2)];
+            obj.axesHandle.XLim = [0, obj.windowSize(1)];
+            obj.axesHandle.YLim = [0, obj.windowSize(2)];
+            obj.axesHandle.XDir = 'normal';
+            obj.axesHandle.YDir = 'normal';
+            obj.axesHandle.XTick = [];
+            obj.axesHandle.YTick = [];
+            obj.axesHandle.Visible = 'off'; % Hide axes borders and ticks
+            obj.axesHandle.SortMethod = 'depth'; % Ensure correct rendering order
+            obj.axesHandle.ButtonDownFcn = @(~, event) obj.onAxesClick(event);
+
+            hold(obj.axesHandle, 'on');
         end
 
         function update(obj)
@@ -60,11 +76,16 @@ classdef Battle < RenderUI
 
         function render(obj)
             % Wipe the window clean of stars
+            cla(obj.axesHandle);
+
+            hold(obj.axesHandle, 'on');
 
             % Re-render all stars
             for i = 1:length(obj.stars)
                 obj.stars(i).render();
             end
+
+            hold(obj.axesHandle, 'off');
         end
 
         function spawnStars(obj)
@@ -74,7 +95,7 @@ classdef Battle < RenderUI
             if rand() < starSpawnChance
                 % Randomly generate star properties
                 vertexCount = randi([2, 10]);
-                star = Star(obj.window, vertexCount, @(s) obj.despawnStar(s));
+                star = Star(obj.window, obj.axesHandle, vertexCount, @(s) obj.despawnStar(s));
 
                 % Add star to the list of objects to render
                 obj.stars = [obj.stars, star];
@@ -84,6 +105,22 @@ classdef Battle < RenderUI
         function despawnStar(obj, star)
             % Remove star from the list of objects to render
             obj.stars = obj.stars(obj.stars ~= star);
+            if isgraphics(star.plotHandle)
+                delete(star.plotHandle);
+            end
+        end
+
+        function onAxesClick(obj, event)
+            % Check if the click was on a star
+            clickPosition = [event.IntersectionPoint(1), event.IntersectionPoint(2)];
+            for i = 1:length(obj.stars)
+                score = obj.stars(i).onClick(clickPosition);
+                if score > 0
+                    obj.globalState.score = obj.globalState.score + score + obj.combo;
+                    obj.combo = obj.combo + 1;
+                    % Some stars may overlap with each other, so we check for all and don't break
+                end
+            end
         end
     end
 end

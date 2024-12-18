@@ -38,6 +38,10 @@ classdef (Abstract) RenderUI < handle
             end
         end
 
+        function render(~)
+            % Does not exist default due to UI components do not requiring self-renderin
+            % Implementation overriden in Battle to render Stars
+        end
     end
 
     methods (Abstract)

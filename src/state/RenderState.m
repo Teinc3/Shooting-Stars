@@ -33,6 +33,11 @@ classdef RenderState < handle
             obj.exists = true;
         end
 
+        function tick(obj)
+            obj.update();
+            obj.renderUI.render();
+        end
+
         function update(obj)
             % update - Update the UI based on the game state
 
