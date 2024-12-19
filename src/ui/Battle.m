@@ -4,11 +4,12 @@ classdef Battle < RenderUI
 
         MinSpawnRate = 2;
         MaxStarCount = 10;
+        MinStarVertices = 3;
+        MaxStarVertices = 10;
     end
     properties
         timeLeftInSeconds
         stars % Cell array of Star objects to render
-        combo
         axesHandle % Handle to the axes object to render stars
     end
     methods
@@ -16,9 +17,9 @@ classdef Battle < RenderUI
             obj@RenderUI(window, globalState); % Call superclass constructor
 
             obj.timeLeftInSeconds = Battle.TimeLimit;
-            obj.combo = 0;
 
             obj.globalState.score = 0;
+            obj.globalState.combo = 0;
 
             obj.stars = [];
         end
@@ -30,15 +31,15 @@ classdef Battle < RenderUI
             timeCounter.Position = [10, obj.windowSize(2) - 40, 120, 30]; % Increased height and width for better visibility
             obj.addRenderObject(timeCounter);
 
+            % Combo Counter at the top middle
+            comboCounter = uilabel('Parent', obj.window, 'Text', 'Combo: 0', 'FontSize', 20, 'HorizontalAlignment', "center");
+            comboCounter.Position = [obj.windowSize(1) / 2 - 60, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
+            obj.addRenderObject(comboCounter);
+
             % Score Counter at the top right
             scoreCounter = uilabel('Parent', obj.window, 'Text', 'Score: 0', 'FontSize', 20, 'HorizontalAlignment', "right");
             scoreCounter.Position = [obj.windowSize(1) - 130, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
             obj.addRenderObject(scoreCounter);
-
-            % Star Counter at the top middle (Debug)
-            starCounter = uilabel('Parent', obj.window, 'Text', 'Stars: 0', 'FontSize', 20, 'HorizontalAlignment', "center");
-            starCounter.Position = [obj.windowSize(1) / 2 - 60, obj.windowSize(2) - 40, 120, 30]; % Increased height and width
-            obj.addRenderObject(starCounter);
 
             % Attach axes to the ui window
             obj.axesHandle = uiaxes('Parent', obj.window);
@@ -51,6 +52,9 @@ classdef Battle < RenderUI
             obj.axesHandle.YTick = [];
             obj.axesHandle.Visible = 'off'; % Hide axes borders and ticks
             obj.axesHandle.SortMethod = 'depth'; % Ensure correct rendering order
+
+            obj.axesHandle.HitTest = 'on';
+            obj.axesHandle.PickableParts = 'all';
             obj.axesHandle.ButtonDownFcn = @(~, event) obj.onAxesClick(event);
 
             hold(obj.axesHandle, 'on');
@@ -72,8 +76,8 @@ classdef Battle < RenderUI
 
             % Update the text of the time counter
             obj.RenderObjects{1}.Text = ['Time: ', num2str(ceil(obj.timeLeftInSeconds))];
-            obj.RenderObjects{2}.Text = ['Score: ', num2str(obj.globalState.score)];
-            obj.RenderObjects{3}.Text = ['Stars: ', num2str(length(obj.stars))];
+            obj.RenderObjects{2}.Text = ['Combo: ', num2str(obj.globalState.combo)];
+            obj.RenderObjects{3}.Text = ['Score: ', num2str(obj.globalState.score)];
 
             % Function to spawn and update/render stars
             obj.spawnStars(deltaTime);
@@ -92,7 +96,7 @@ classdef Battle < RenderUI
 
             while rand() < starSpawnChance
                 % Randomly generate star properties
-                vertexCount = randi([2, 10]);
+                vertexCount = randi([Battle.MinStarVertices, Battle.MaxStarVertices]);
                 star = Star(obj.window, obj.axesHandle, vertexCount, @(s) obj.despawnStar(s));
 
                 % Add star to the list of objects to render
@@ -104,11 +108,6 @@ classdef Battle < RenderUI
         end
 
         function despawnStar(obj, star)
-            % Check Combo
-            if ~star.isHit
-                obj.combo = 0;
-            end
-
             % Remove star from the list of objects to render
             obj.stars = obj.stars(obj.stars ~= star);
             if isgraphics(star.plotHandle)
@@ -122,11 +121,13 @@ classdef Battle < RenderUI
             for i = length(obj.stars):-1:1
                 score = obj.stars(i).onClick(clickPosition);
                 if score > 0
-                    obj.globalState.score = obj.globalState.score + score + obj.combo;
-                    obj.combo = obj.combo + 1;
-                    % Some stars may overlap with each other, so we check for all and don't break
+                    obj.globalState.score = obj.globalState.score + score + obj.globalState.combo;
+                    obj.globalState.combo = obj.globalState.combo + 1;
+                    return;
                 end
             end
+            % Combo lost
+            obj.globalState.combo = 0;
         end
     end
 end

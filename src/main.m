@@ -1,5 +1,6 @@
-% main.m
-% A shooting range game
+% Shooting Stars
+% A simple game made in MATLAB, where you shoot stars to gain points.
+% Heavily OOP based (Not a compliment)
 
 close all
 clear variables
@@ -18,8 +19,8 @@ neonTimer = NeonTimer();
 % Render UI
 renderState = RenderState(window, globalState, neonTimer);
 
-% Event Listener for game state change
-addlistener(globalState, 'gameState', 'PostSet', @(src, event) renderState.updateRenderUI(window, globalState));
+% Set callback into globalState so whenever it changes render ui can be updated.
+globalState.setCallback(@() renderState.updateRenderUI(window, globalState))
 
 % Main Loop
 averageDeltaTime = zeros(1, 10);

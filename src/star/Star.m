@@ -133,12 +133,11 @@ classdef Star < handle
                 % Change the data in the plothandle
                 obj.plotHandle.XData = obj.position(1, :);
                 obj.plotHandle.YData = obj.position(2, :);
-                obj.plotHandle.FaceColor = 'none';
                 obj.plotHandle.EdgeColor = rgbColor;
             else
                 % New star, create a new plothandle
                 obj.plotHandle = fill(obj.axesHandle, obj.position(1, :), obj.position(2, :), rgbColor, ...
-                    'EdgeColor', 'none', 'LineWidth', min(3, obj.ogSize / 10), 'PickableParts', 'none');
+                    'EdgeColor', 'none', 'LineWidth', min(3, obj.ogSize / 10), 'HitTest', 'off', 'PickableParts', 'none');
                 obj.plotHandle.FaceColor = 'none';
             end
         end
@@ -171,10 +170,11 @@ classdef Star < handle
             % Check polygon collision with mouse click
             % If hit, set isHit to true and return score
             % Else return 0 (no score)
-            if ~obj.isHit && inpolygon(clickPosition(1), clickPosition(2), obj.position(:, 1), obj.position(:, 2))
+
+            if ~obj.isHit && inpolygon(clickPosition(1), clickPosition(2), obj.position(1, :), obj.position(2, :))
                 obj.isHit = true;
                 % Score gained relative to ogSize, the smaller the better
-                score = (obj.ogSize / obj.size) + abs(obj.angV)/4;
+                score = ceil((obj.ogSize / obj.size) + abs(obj.angV)/4);
             else
                 score = 0;
             end
