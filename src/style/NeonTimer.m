@@ -1,10 +1,11 @@
 classdef NeonTimer < handle
+    % Class to manage neon style for UI Components (Not stars! )
     properties
-        offset          % Global offset for color changes
-        baseColors      % Structure holding base colors for components
-        colorRange      % Structure defining color fluctuation ranges
-        maxOffset       % Maximum offset value before reset
-        currentColors   % Current colors applied to components
+        offset % Offset for color
+        baseColors % Base colors for different types of UI components
+        colorRange % Color fluctuation ranges for UI components
+        maxOffset % Maximum offset before modulating
+        currentColors % Current colors applied to components, fetched dynamically when required
     end
     
     methods
@@ -15,13 +16,13 @@ classdef NeonTimer < handle
             
             % Define base colors for different components
             obj.baseColors.background = [0, 0, 0];       % Black background
-            obj.baseColors.button = [1, 0, 0];           % Red buttons
+            obj.baseColors.button = [0.5, 0, 0];           % Red buttons
             obj.baseColors.label = [0, 1, 1];            % Cyan labels
             
             % Define color ranges (how much each component can vary)
-            obj.colorRange.background = [0.05, 0.05, 0.05]; % Subtle variation
+            obj.colorRange.background = [0.1, 0.1, 0.1]; % Subtle variation
             obj.colorRange.button = [0.2, 0.2, 0.2];       % More noticeable
-            obj.colorRange.label = [0.2, 0.2, 0.2];        % More noticeable
+            obj.colorRange.label = [0.4, 0.4, 0.4];        % More noticeable
             
             % Initialize current colors with base colors
             obj.currentColors.background = obj.baseColors.background;
@@ -30,7 +31,8 @@ classdef NeonTimer < handle
         end
         
         function update(obj, deltaTime)
-            % onTimer - Function called on each timer tick to update colors
+            % Function called on each timer tick to update colors
+            
             % Update the offset
             obj.offset = obj.offset + deltaTime;
             if obj.offset > obj.maxOffset

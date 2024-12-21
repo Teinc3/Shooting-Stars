@@ -1,4 +1,7 @@
 classdef RenderState < handle
+    % RenderState
+    % Class for handling the current render state of the game
+
     properties
         exists = false;
         renderUI % Make sure this is not empty
@@ -25,6 +28,8 @@ classdef RenderState < handle
                     obj.renderUI = Battle(window, globalState);
                 case 2
                     obj.renderUI = Results(window, globalState);
+                case 3
+                    obj.renderUI = Settings(window, globalState);
                 otherwise
                     obj.exists = false;
                     return

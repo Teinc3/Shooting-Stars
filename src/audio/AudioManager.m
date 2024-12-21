@@ -1,13 +1,15 @@
 classdef AudioManager < handle
+    % Class to manage audio playback
+
     properties (Constant)
-        audioFile = 'lib/resources/shooting_stars.mp3';
+        audioFile = 'lib/resources/shooting_stars.mp3'; % Shooting Stars by Bag Raiders Instrumental
     end
     properties
-        originalSoundtrack % Original audio data
-        originalFs         % Original sampling frequency
-        player             % audioplayer object
-        isPlaying          % Boolean playback state
-        volume             % Current volume level (0 to 1)
+        originalSoundtrack % OG audio data
+        originalFs % OG sampling freq
+        player % audioplayer
+        isPlaying % playback state
+        volume % Current volume level (0 to 1)
     end
 
     methods
@@ -46,7 +48,7 @@ classdef AudioManager < handle
             else
                 % Adjust the audio data based on the volume level
                 adjustedSoundtrack = obj.originalSoundtrack * volume;
-                % Prevent clipping by ensuring values are within [-1, 1]
+                % Prevent clipping by clamping values to [-1, 1]
                 adjustedSoundtrack(adjustedSoundtrack > 1) = 1;
                 adjustedSoundtrack(adjustedSoundtrack < -1) = -1;
                 

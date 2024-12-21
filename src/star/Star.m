@@ -1,12 +1,18 @@
 classdef Star < handle
+    % Class and implementation of a Star object
+    % Star: A polygonal object that moves across the screen
+    % Stars can be clicked on to gain score
+    % After being hit on / going offscreen, they despawn to free up resources
+
+    % DefineStar generator function (2024 c. Isaac Mear)
     properties (Constant)
-        MinimumSize = 10;
-        MaximumSize = 80;
-        VelocityMultiplier = 200;
+        SizeLimit = [10, 60];
+        VelocityMultiplier = 150;
+        GravityConstant = 1;
     end
     properties
-        window % handle to the window
-        windowSize % size of the window
+        window % handle to window
+        windowSize % sizes of window
 
         axesHandle % handle to the axes
         plotHandle % handle to the plot
@@ -41,9 +47,9 @@ classdef Star < handle
             obj.centralPosition = zeros(1, 2);
 
             obj.timeAlive = 0;
-            obj.angle = (rand() - 0.5) * 2*pi;
+            obj.angle = -pi*rand();
 
-            obj.ogSize = rand() * (Star.MaximumSize - Star.MinimumSize) + Star.MinimumSize;
+            obj.ogSize = rand() * (Star.SizeLimit(2) - Star.SizeLimit(1)) + Star.SizeLimit(1);
             obj.size = obj.ogSize;
 
             obj.color = rand() * 2*pi;
@@ -59,18 +65,13 @@ classdef Star < handle
             width = obj.windowSize(1);
             height = obj.windowSize(2);
 
-            isBottom = angle < 0;
-            isRight = abs(angle) > pi/2;
-
-            % First decide which side to stick to and which side is free
-            if rand() < 0.5
-                % Fix y to top or bottom, depending on angle
-                y = (isBottom) * height;
-                x = (rand()/2 + (isRight)) * width;
+            isRight = angle < -pi/2;
+            if abs(angle + pi/2) < pi/4
+                x = (rand() + (isRight)) * width/2;
+                y = height;
             else
-                % Fix x to left or right
                 x = (isRight) * width;
-                y = (rand()/2 + (~isBottom)) * height;
+                y = (1 + rand()) * height/2;
             end
 
             obj.centralPosition = [x, y];
@@ -83,7 +84,7 @@ classdef Star < handle
                 return;
             end
             obj.updateArgument(deltaTime);
-            obj.updateModulus();
+            obj.updateModulus(deltaTime);
             
             % Obtain the transformed star from the updated position
             obj.getTransformedStar();
@@ -93,10 +94,12 @@ classdef Star < handle
         end
 
         function updatePosition(obj, deltaTime)
+            % Equation of y-displacement: s = ut - 0.5gt^2
             obj.timeAlive = obj.timeAlive + deltaTime;
-            obj.centralPosition = obj.centralPosition + ...
-                Star.VelocityMultiplier * obj.calculateSizeFactor() * deltaTime * [cos(obj.angle), sin(obj.angle)];
-        end
+            velDisp = Star.VelocityMultiplier * obj.calculateSizeFactor() * [cos(obj.angle), sin(obj.angle)] * deltaTime;
+            gravDisp = 0.5 * Star.GravityConstant * [0, -1] * obj.timeAlive^2;
+            obj.centralPosition = obj.centralPosition + velDisp + gravDisp;
+            end
 
         function updateArgument(obj, deltaTime)
             % Update color accordingly to angV
@@ -107,10 +110,13 @@ classdef Star < handle
             obj.angV = min(abs(obj.angV), pi) * sign(obj.angV);
         end
 
-        function updateModulus(obj)
+        function updateModulus(obj, deltaTime)
             if obj.isHit
                 % Gradually diminish its size
-                obj.size = obj.size - obj.ogSize / 100;
+                obj.size = obj.size - obj.ogSize * deltaTime;
+                if isgraphics(obj.plotHandle)
+                    obj.plotHandle.EdgeAlpha = max(0, obj.plotHandle.EdgeAlpha - deltaTime);
+                end
                 if obj.size < 0
                     obj.despawnStar(obj);
                 end
@@ -122,20 +128,20 @@ classdef Star < handle
         end
 
         function render(obj)
-            % Render the star on the UI
+            % Render the star on the Axes
 
             % Obtain Star information
             obj.getTransformedStar();
             rgbColor = hsv2rgb([obj.color / (2 * pi), 1, 1]);
 
-            % Draw the star
+            % Draw the star on the Axes
             if isgraphics(obj.plotHandle)
-                % Change the data in the plothandle
+                % Change the data directly in the plothandle
                 obj.plotHandle.XData = obj.position(1, :);
                 obj.plotHandle.YData = obj.position(2, :);
                 obj.plotHandle.EdgeColor = rgbColor;
             else
-                % New star, create a new plothandle
+                % New star, save reference to a new plotHandle for future updating
                 obj.plotHandle = fill(obj.axesHandle, obj.position(1, :), obj.position(2, :), rgbColor, ...
                     'EdgeColor', 'none', 'LineWidth', min(3, obj.ogSize / 10), 'HitTest', 'off', 'PickableParts', 'none');
                 obj.plotHandle.FaceColor = 'none';
@@ -143,7 +149,7 @@ classdef Star < handle
         end
 
         function isOOB = checkOOB(obj)
-            % Check if the star is out of bounds
+            % Function to check if the star is out of bounds
             width = obj.windowSize(1);
             height = obj.windowSize(2);
 
@@ -158,7 +164,7 @@ classdef Star < handle
         function position = getTransformedStar(obj)
             % Generate a new star with the same properties
             position = DefineStar(obj.vertexCount);
-            position = position * obj.size; % Simply scalar multiplication
+            position = position * obj.size; % Scalar multiplication
             position = rotateShape(position, obj.color);
             position = translateShape(position, obj.centralPosition);
 
@@ -171,12 +177,16 @@ classdef Star < handle
             % If hit, set isHit to true and return score
             % Else return 0 (no score)
 
-            if ~obj.isHit && inpolygon(clickPosition(1), clickPosition(2), obj.position(1, :), obj.position(2, :))
-                obj.isHit = true;
-                % Score gained relative to ogSize, the smaller the better
-                score = ceil((obj.ogSize / obj.size) + abs(obj.angV)/4);
-            else
-                score = 0;
+            if inpolygon(clickPosition(1), clickPosition(2), obj.position(1, :), obj.position(2, :))
+                if obj.isHit
+                    score = 0;
+                else
+                    obj.isHit = true;
+                    % Score gained relative to ogSize, the smaller the better
+                    score = ceil((obj.ogSize / obj.size) + abs(obj.angV)/4);
+                end
+            else % Miss
+                score = -1;
             end
         end
 
@@ -184,7 +194,7 @@ classdef Star < handle
             % Calculate the size factor based on the size of the star
             % The size factor is used to determine the speed of the star
             % The larger the star, the slower it moves - but the less score it has
-            factor = (obj.ogSize * 2 / (Star.MinimumSize + Star.MaximumSize));
+            factor = (obj.ogSize * 2 / (sum(Star.SizeLimit)));
         end
     end
 end

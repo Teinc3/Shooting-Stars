@@ -1,11 +1,14 @@
 classdef Battle < RenderUI
+    % Class and implementation of Battle UI Mode
+    % Big tent class, includes Rendering and Game Logic... Too lazy to break it down
+
     properties (Constant)
+        % Static properties
         TimeLimit = 90;
 
         MinSpawnRate = 2;
         MaxStarCount = 10;
-        MinStarVertices = 3;
-        MaxStarVertices = 10;
+        StarVerticies = [3, 10];
     end
     properties
         timeLeftInSeconds
@@ -42,6 +45,7 @@ classdef Battle < RenderUI
             obj.addRenderObject(scoreCounter);
 
             % Attach axes to the ui window
+            % These options makes the axes look "not like an axes", which is VERY IMPORTANT
             obj.axesHandle = uiaxes('Parent', obj.window);
             obj.axesHandle.Position = [0, 0, obj.windowSize(1), obj.windowSize(2)];
             obj.axesHandle.XLim = [0, obj.windowSize(1)];
@@ -52,7 +56,11 @@ classdef Battle < RenderUI
             obj.axesHandle.YTick = [];
             obj.axesHandle.Visible = 'off'; % Hide axes borders and ticks
             obj.axesHandle.SortMethod = 'depth'; % Ensure correct rendering order
+            % Remove toolbar interactions
+            obj.axesHandle.Toolbar.Visible = 'off';
+            disableDefaultInteractivity(obj.axesHandle);
 
+            % Enable click interactions
             obj.axesHandle.HitTest = 'on';
             obj.axesHandle.PickableParts = 'all';
             obj.axesHandle.ButtonDownFcn = @(~, event) obj.onAxesClick(event);
@@ -61,27 +69,29 @@ classdef Battle < RenderUI
         end
 
         function update(obj, deltaTime)
-            % Implement game-specific update logic
+            % Implement battle-specific update logic
 
+            % Update time
             obj.timeLeftInSeconds = obj.timeLeftInSeconds - deltaTime;
             if obj.timeLeftInSeconds <= 0
-                % Despawn all stars
+                % Despawn all stars first
                 for i = length(obj.stars):-1:1
                     obj.despawnStar(obj.stars(i));
                 end
 
-                % Move to results screen
+                % Then move to results screen
                 obj.globalState.updateGameState(2);
             end
 
-            % Update the text of the time counter
+            % Update the text of the counters above
             obj.RenderObjects{1}.Text = ['Time: ', num2str(ceil(obj.timeLeftInSeconds))];
             obj.RenderObjects{2}.Text = ['Combo: ', num2str(obj.globalState.combo)];
             obj.RenderObjects{3}.Text = ['Score: ', num2str(obj.globalState.score)];
 
-            % Function to spawn and update/render stars
+            % Spawn new stars if needed
             obj.spawnStars(deltaTime);
-
+            
+            % Update all stars
             for i = length(obj.stars):-1:1
                 obj.stars(i).update(deltaTime);
             end
@@ -96,7 +106,7 @@ classdef Battle < RenderUI
 
             while rand() < starSpawnChance
                 % Randomly generate star properties
-                vertexCount = randi([Battle.MinStarVertices, Battle.MaxStarVertices]);
+                vertexCount = randi(Battle.StarVerticies);
                 star = Star(obj.window, obj.axesHandle, vertexCount, @(s) obj.despawnStar(s));
 
                 % Add star to the list of objects to render
@@ -116,17 +126,21 @@ classdef Battle < RenderUI
         end
 
         function onAxesClick(obj, event)
-            % Check if the click was on a star
+            % Function to handle click events on the axes
             clickPosition = [event.IntersectionPoint(1), event.IntersectionPoint(2)];
+
             for i = length(obj.stars):-1:1
+                % Check if the click was on this star
                 score = obj.stars(i).onClick(clickPosition);
-                if score > 0
+                if score > 0 % Hit
                     obj.globalState.score = obj.globalState.score + score + obj.globalState.combo;
                     obj.globalState.combo = obj.globalState.combo + 1;
+                    return; % So that we don't lose the combo
+                elseif score == 0 % Doesn't count, but no combo loss
                     return;
                 end
             end
-            % Combo lost
+            % Miss, lose combo
             obj.globalState.combo = 0;
         end
     end

@@ -1,6 +1,7 @@
 classdef GlobalState < handle
+    % "Global" class that holds states that are shared across different parts of the game
     properties (SetObservable)
-        gameState {mustBeMember(gameState, [0, 1, 2, 3])}
+        gameState {mustBeMember(gameState, [-1, 0, 1, 2])}
         score {mustBeInteger(score), mustBeNonnegative(score)}
         combo {mustBeInteger(combo), mustBeNonnegative(combo)}
         audioManager
@@ -19,6 +20,7 @@ classdef GlobalState < handle
         end
 
         function setCallback(obj, callback)
+            % Set callback st when the game state changes, the UI can be updated accordingly (No listeners required)
             obj.gameStateCallback = callback;
         end
 
